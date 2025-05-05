@@ -107,12 +107,52 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-// Import the actual components
+// Import components
 import Header from './src/components/Header';
-import Sidebar from './src/components/Sidebar'; // This is the Web Sidebar now
-import SessionList from './src/components/SessionList';
+import Sidebar from './src/components/Sidebar';
+import SessionList from './src/components/SessionList'; // This is our 'Stats' screen content
 import BottomTabs from './src/components/BottomTabs';
 import MobileFilters from './src/components/MobileFilters';
+import MurliScreen from './src/components/MurliScreen'; // Import new screen
+import EventsScreen from './src/components/EventsScreen'; // Import new screen
+import { ExampleComponent } from './src/components/ExampleComponent'; // <-- Import ExampleComponent
+
+// MSW Native Setup (Import AFTER other imports)
+// Only run this setup in development mode AND not in a test environment
+/* --- Commenting out Native MSW setup for Expo Go compatibility ---
+if (__DEV__ && Platform.OS !== 'web' && process.env.NODE_ENV !== 'test') {
+  // Import synchronously requires Metro configuration,
+  // dynamically importing avoids this complexity for now.
+  import('./mocks/native').then(({ nativeServer }) => {
+    // Check if running and start if not (handles Fast Refresh)
+    if (typeof nativeServer.listen === 'function') { // Use listen as a proxy check
+        try {
+           nativeServer.listen({ onUnhandledRequest: 'bypass' });
+           console.log('[MSW Native] Server started.');
+        } catch (e) {
+          // Ignore errors if server is already running (common with Fast Refresh)
+          // You might want more specific error checking here depending on MSW's behavior
+          if (!e.message.includes('already running')) { // Example check
+             console.warn('[MSW Native] Server potentially already running or failed to start:', e.message);
+          }
+        }
+    } else {
+      console.warn('[MSW Native] nativeServer object structure unexpected. Could not start.');
+    }
+  }).catch(error => {
+    console.error('[MSW Native] Failed to load or start server:', error);
+  });
+}
+*/
+
+// Define screen names as constants
+const SCREENS = {
+  STATS: 'Stats',
+  MURLI: 'Murlis',
+  EVENTS: 'Events',
+  HOME: 'Home',
+  USERS: 'Users',
+};
 
 export default function App() {
   const { width } = useWindowDimensions();
@@ -121,11 +161,49 @@ export default function App() {
   const showSidebarInline = isWeb && width > 768;
 
   const [mobileFiltersVisible, setMobileFiltersVisible] = useState(false);
+  // Add state for active screen
+  const [activeScreen, setActiveScreen] = useState(SCREENS.STATS); 
+
+  // Function to render the correct screen based on activeScreen state
+  const renderActiveScreen = () => {
+    console.log('--- RENDER ACTIVE SCREEN CALLED ---');
+    console.log('[App] Rendering screen:', activeScreen);
+    switch (activeScreen) {
+      case SCREENS.STATS:
+        console.log('[App] Rendering STATS screen content');
+        return (
+          <ScrollView>
+            <ExampleComponent /> {/* <-- Add ExampleComponent here for testing */}
+            <SessionList setMobileFiltersVisible={setMobileFiltersVisible} />
+          </ScrollView>
+        );
+      case SCREENS.MURLI:
+        console.log('[App] Rendering MURLI screen content');
+        return <MurliScreen />;
+      case SCREENS.EVENTS:
+        console.log('[App] Rendering EVENTS screen content');
+        return <EventsScreen />;
+      // Add cases for HOME, USERS later if needed
+      default:
+        console.log('[App] Rendering default screen content (STATS)');
+        return (
+          <ScrollView>
+             <ExampleComponent /> {/* <-- Add ExampleComponent here for testing */}
+            <SessionList setMobileFiltersVisible={setMobileFiltersVisible} />
+           </ScrollView>
+         );
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
-      <Header isWeb={isWeb} />
+      {/* Pass activeScreen state and setter to Header */}
+      <Header 
+        isWeb={isWeb} 
+        activeScreen={activeScreen} 
+        setActiveScreen={setActiveScreen} 
+      />
       <View style={[styles.container, showSidebarInline ? styles.containerWeb : styles.containerMobile]}>
         {/* Web Sidebar */}
         {showSidebarInline && (
@@ -137,12 +215,17 @@ export default function App() {
         )}
         {/* Main Content Area */}
         <View style={styles.mainContentContainer}>
-          <SessionList setMobileFiltersVisible={setMobileFiltersVisible} />
+          {/* Render the active screen using the function */} 
+          {renderActiveScreen()}
         </View>
       </View>
-      {/* Bottom Tabs - Ensure no stray text/whitespace around this conditional render */}
-      {isMobile && <BottomTabs />}
-      {/* Mobile Filters - Ensure no stray text/whitespace around this conditional render */}
+      {/* Pass activeScreen state and setter to BottomTabs */}
+      {isMobile && 
+        <BottomTabs 
+          activeScreen={activeScreen} 
+          setActiveScreen={setActiveScreen} 
+        />}
+      {/* Mobile Filters Overlay */}
       {isMobile && mobileFiltersVisible && (
         <MobileFilters onClose={() => setMobileFiltersVisible(false)} />
       )}
@@ -174,7 +257,6 @@ const styles = StyleSheet.create({
   },
   mainContentContainer: {
     flex: 1,
-    padding: Platform.select({ web: 20, default: 10 }),
     backgroundColor: '#f0f0f0',
   },
 });

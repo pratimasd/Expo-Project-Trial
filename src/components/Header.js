@@ -10,9 +10,7 @@ const NAV_ITEMS = [
   { name: 'Users', icon: 'people' },
 ];
 
-const Header = ({ isWeb }) => {
-  const [activeTab, setActiveTab] = React.useState('Stats'); // Default to Stats as per image
-
+const Header = ({ isWeb, activeScreen, setActiveScreen }) => {
   return (
     <View style={styles.headerContainer}>
       <View style={styles.leftContainer}>
@@ -26,11 +24,11 @@ const Header = ({ isWeb }) => {
           {NAV_ITEMS.map((item) => (
             <TouchableOpacity
               key={item.name}
-              style={[styles.navItem, activeTab === item.name && styles.activeNavItem]}
-              onPress={() => setActiveTab(item.name)}
+              style={[styles.navItem, activeScreen === item.name && styles.activeNavItem]}
+              onPress={() => setActiveScreen(item.name)}
             >
-              <MaterialIcons name={item.icon} size={20} color={activeTab === item.name ? '#d32f2f' : 'white'} />
-              <Text style={[styles.navText, activeTab === item.name && styles.activeNavText]}>
+              <MaterialIcons name={item.icon} size={20} color={activeScreen === item.name ? '#d32f2f' : 'white'} />
+              <Text style={[styles.navText, activeScreen === item.name && styles.activeNavText]}>
                 {item.name}
               </Text>
             </TouchableOpacity>
